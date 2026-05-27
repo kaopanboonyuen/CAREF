@@ -1,0 +1,36 @@
+# requirements.txt
+# =================
+# CAREF: Calibration-Aware Regularization for Explanation Faithfulness
+# EMNLP 2026  |  https://kaopanboonyuen.github.io/CAREF
+#
+# Tested with Python 3.10 on Ubuntu 20.04 / CUDA 11.4
+
+# --- Core deep learning ---
+torch>=2.0.0
+transformers>=4.40.0
+datasets>=2.18.0
+peft>=0.10.0              # Hugging Face PEFT (LoRA / AdaLoRA / IA3 baselines)
+accelerate>=0.28.0
+
+# --- Metrics ---
+bert-score>=0.3.13        # nBERT computation (requires transformers)
+evaluate>=0.4.1           # HuggingFace evaluate library
+
+# --- Training utilities ---
+numpy>=1.24.0
+scipy>=1.11.0
+scikit-learn>=1.3.0
+tqdm>=4.66.0
+
+# --- Config & logging ---
+pyyaml>=6.0
+wandb>=0.16.0             # optional: experiment tracking
+
+# --- Testing ---
+pytest>=8.0.0
+pytest-cov>=4.1.0
+
+# --- Development (optional) ---
+black>=24.0.0
+isort>=5.13.0
+flake8>=7.0.0
