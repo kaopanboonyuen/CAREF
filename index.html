@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CAREF | Calibration-Aware Regularization for Explanation Faithfulness</title>
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
+
+  <meta name="description"
+    content="CAREF: Calibration-Aware Regularization for Explanation Faithfulness Without Rationale Supervision. EMNLP 2026 submission under ACL ARR May 2026." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --c-bg:       #04080f;
+      --c-surface:  #0b1120;
+      --c-border:   rgba(255,255,255,0.07);
+      --c-teal:     #2dd4bf;
+      --c-violet:   #a78bfa;
+      --c-amber:    #fbbf24;
+      --c-green:    #34d399;
+      --c-text:     #e2e8f0;
+      --c-muted:    #64748b;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--c-bg);
+      color: var(--c-text);
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3, .display {
+      font-family: 'Syne', sans-serif;
+    }
+
+    /* ---- gradients ---- */
+    .grad-text {
+      background: linear-gradient(100deg, #2dd4bf 0%, #a78bfa 55%, #fbbf24 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ---- glass ---- */
+    .glass {
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--c-border);
+    }
+
+    /* ---- noise overlay ---- */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ---- glow orbs ---- */
+    .orb {
+      position: absolute;
+      border-radius: 9999px;
+      filter: blur(120px);
+      z-index: 0;
+      pointer-events: none;
+    }
+    .orb-teal   { background: rgba(45,212,191,0.12); }
+    .orb-violet { background: rgba(167,139,250,0.12); }
+    .orb-amber  { background: rgba(251,191,36,0.08); }
+
+    /* ---- nav ---- */
+    .nav-blur {
+      background: rgba(4,8,15,0.75);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--c-border);
+    }
+
+    /* ---- metric cards ---- */
+    .metric-card { transition: transform .35s ease, box-shadow .35s ease; }
+    .metric-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 24px 48px rgba(45,212,191,0.15);
+    }
+
+    @keyframes float {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-12px); }
+    }
+    .float { animation: float 7s ease-in-out infinite; }
+
+    /* ---- divider ---- */
+    .line {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.1), transparent);
+    }
+
+    /* ---- table ---- */
+    .tbl-row:hover td { background: rgba(255,255,255,.025); }
+    .tbl-row td { transition: background .2s; }
+
+    /* ---- badge ---- */
+    .badge-arr {
+      background: rgba(251,191,36,.12);
+      border: 1px solid rgba(251,191,36,.35);
+      color: #fbbf24;
+    }
+
+    /* ---- section label ---- */
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.15em;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+    }
+
+    /* ---- code block ---- */
+    pre { font-family: 'JetBrains Mono', monospace; }
+
+    /* ---- scroll fade-in ---- */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity .7s ease, transform .7s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- ─────────────────────────────── NAVBAR ─────────────────────── -->
+<nav class="fixed top-0 w-full z-50 nav-blur">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div class="text-xl font-bold grad-text" style="font-family:'Syne',sans-serif">CAREF</div>
+    <div class="hidden md:flex gap-8 text-sm text-slate-400">
+      <a href="#overview"    class="hover:text-teal-400 transition">Overview</a>
+      <a href="#method"      class="hover:text-teal-400 transition">Method</a>
+      <a href="#results"     class="hover:text-teal-400 transition">Results</a>
+      <a href="#qualitative" class="hover:text-teal-400 transition">Examples</a>
+      <a href="#citation"    class="hover:text-teal-400 transition">Citation</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ─────────────────────────────── HERO ───────────────────────── -->
+<section class="relative min-h-screen flex items-center justify-center px-6 overflow-hidden pt-24">
+
+  <!-- orbs -->
+  <div class="orb orb-teal"   style="width:700px;height:700px;top:-200px;right:-150px;"></div>
+  <div class="orb orb-violet" style="width:600px;height:600px;bottom:-200px;left:-200px;"></div>
+  <div class="orb orb-amber"  style="width:400px;height:400px;top:40%;left:40%;"></div>
+
+  <div class="relative z-10 max-w-5xl mx-auto text-center">
+
+    <!-- ARR badge -->
+    <div class="inline-flex items-center gap-3 px-5 py-2 rounded-full badge-arr text-sm font-semibold mb-8">
+      🔄 Under ACL Rolling Review (ARR) May 2026 · EMNLP 2026 Submission
+    </div>
+
+    <h1 class="text-7xl md:text-9xl font-black leading-none mb-6 grad-text">
+      CAREF
+    </h1>
+
+    <h2 class="text-xl md:text-3xl font-bold text-slate-200 mb-6 leading-snug">
+      Calibration-Aware Regularization<br/>for Explanation Faithfulness<br/>
+      <span class="text-slate-400 font-medium text-lg md:text-xl">Without Rationale Supervision</span>
+    </h2>
+
+    <p class="max-w-3xl mx-auto text-base md:text-lg text-slate-400 leading-relaxed mb-4">
+      By 
+      <a href="https://kaopanboonyuen.github.io"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="text-teal-400 hover:underline font-medium">
+        Teerapong Panboonyuen
+      </a>
+    </p>
+
+    <p class="max-w-3xl mx-auto text-base text-slate-500 leading-relaxed mb-10">
+      A parameter-efficient fine-tuning framework that jointly optimises predictive accuracy
+      and explanation faithfulness via a single unified loss—the
+      <strong class="text-slate-300">Sparsity-Calibrated Entropic Divergence (ℒ<sub>SCED</sub>)</strong>—using only
+      <strong class="text-teal-400">6.43%</strong> of trainable parameters.
+    </p>
+
+    <!-- CTA buttons -->
+    <div class="flex flex-wrap justify-center gap-4 mb-20">
+      <a href="https://kaopanboonyuen.github.io/CAREF"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="px-7 py-3.5 rounded-2xl bg-teal-500 hover:bg-teal-400 text-black font-bold transition text-sm">
+        🌐 Project Page
+      </a>
+
+      <a href="#"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="px-7 py-3.5 rounded-2xl glass hover:border-teal-400 font-semibold text-sm transition">
+        📄 Paper (ARR)
+      </a>
+
+      <a href="https://github.com/kaopanboonyuen/CAREF"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="px-7 py-3.5 rounded-2xl glass hover:border-violet-400 font-semibold text-sm transition">
+        💻 GitHub
+      </a>
+
+      <a href="#citation"
+        class="px-7 py-3.5 rounded-2xl glass hover:border-amber-400 font-semibold text-sm transition">
+        📚 BibTeX
+      </a>
+    </div>
+    <!-- Floating metric cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="metric-card glass rounded-3xl p-8 float">
+        <div class="text-5xl font-black text-teal-400 mb-3" style="font-family:'Syne',sans-serif">89.04</div>
+        <div class="text-lg font-bold mb-2">Best Avg. Accuracy</div>
+        <p class="text-slate-400 text-sm">CAREF-AQ across COS-E, ECQA, ComVE, e-SNLI benchmarks.</p>
+      </div>
+      <div class="metric-card glass rounded-3xl p-8 float" style="animation-delay:1.2s">
+        <div class="text-5xl font-black text-violet-400 mb-3" style="font-family:'Syne',sans-serif">81.00</div>
+        <div class="text-lg font-bold mb-2">nBERT Alignment</div>
+        <p class="text-slate-400 text-sm">Best explanation faithfulness score without rationale labels.</p>
+      </div>
+      <div class="metric-card glass rounded-3xl p-8 float" style="animation-delay:2.4s">
+        <div class="text-5xl font-black text-amber-400 mb-3" style="font-family:'Syne',sans-serif">6.43%</div>
+        <div class="text-lg font-bold mb-2">Trainable Parameters</div>
+        <p class="text-slate-400 text-sm">Beats LoRA &amp; AdaLoRA at a fraction of the parameter budget.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ─────────────────────────────── OVERVIEW ───────────────────── -->
+<section id="overview" class="py-32 px-6 relative">
+
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16 reveal">
+      <div class="section-label text-teal-400 mb-4">Overview</div>
+      <h2 class="text-4xl md:text-5xl font-black mb-6">The Problem with Faithful Explanations</h2>
+      <p class="max-w-3xl mx-auto text-slate-400 text-lg leading-relaxed">
+        Language models excel at NLU yet fail to produce <em>faithful</em> explanations—ones that causally
+        reflect the model's decision process. Standard fine-tuning is agnostic to <em>how</em> a model
+        allocates probability mass, leading to a structural gap between accuracy and explanation quality.
+      </p>
+    </div>
+
+    <!-- Overview figure -->
+    <div class="glass rounded-3xl overflow-hidden mb-16 reveal">
+      <img src="img/overview_main.png" alt="CAREF overview — accuracy vs parameter budget, explanation quality, human evaluation, hyperparameter sensitivity" class="w-full">
+      <div class="p-8 border-t border-white/5">
+        <p class="text-slate-400 text-sm text-center leading-relaxed">
+          <strong class="text-slate-200">Figure 1.</strong>
+          CAREF at a glance:
+          (a) Accuracy vs. trainable parameter budget across variants;
+          (b) nBERT explanation quality per dataset (w/ vs. w/o CAREF);
+          (c) Human evaluation faithfulness scores;
+          (d) Sensitivity of nBERT to α and β on e-SNLI.
+        </p>
+      </div>
+    </div>
+
+    <!-- Contrast cards -->
+    <div class="grid md:grid-cols-2 gap-8 reveal">
+      <div class="glass rounded-3xl p-10 border border-red-500/20">
+        <div class="text-red-400 text-xl font-bold mb-6">❌ Existing Approaches Fail Because…</div>
+        <ul class="space-y-4 text-slate-300 text-sm leading-relaxed">
+          <li>• <strong>Rationale-supervised methods</strong> require expensive token-level annotations</li>
+          <li>• <strong>Post-hoc attribution</strong> (attention rollout, IG) operates after training—cannot influence representations</li>
+          <li>• <strong>Entropy penalties</strong> flatten distributions indiscriminately, harming interpretability</li>
+          <li>• <strong>Label smoothing</strong> redistributes mass uniformly, actively hurting explanation coherence</li>
+          <li>• <strong>Sparsemax/Entmax</strong> introduces hard sparsity with discontinuous gradients</li>
+        </ul>
+      </div>
+      <div class="glass rounded-3xl p-10 border border-teal-500/20">
+        <div class="text-teal-400 text-xl font-bold mb-6">✅ CAREF's Key Insight</div>
+        <ul class="space-y-4 text-slate-300 text-sm leading-relaxed">
+          <li>• <strong>Single unified loss</strong> ℒ<sub>SCED</sub> jointly regulates entropy and sparsity</li>
+          <li>• <strong>No rationale supervision</strong>—only task labels required</li>
+          <li>• <strong>Fully differentiable</strong>, plug-in compatible with any PEFT method</li>
+          <li>• <strong>Token-adaptive</strong>: penalty concentrates on decision-relevant vocabulary</li>
+          <li>• <strong>Architecture-agnostic</strong>: works with T5, BART, LLaMA, GPT families</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="line max-w-7xl mx-auto"></div>
+
+<!-- ─────────────────────────────── METHOD ─────────────────────── -->
+<section id="method" class="py-32 px-6 relative">
+
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16 reveal">
+      <div class="section-label text-violet-400 mb-4">Method</div>
+      <h2 class="text-4xl md:text-5xl font-black mb-6">The CAREF Framework</h2>
+      <p class="max-w-3xl mx-auto text-slate-400 text-lg leading-relaxed">
+        CAREF couples entropy-based calibration with token-level sparsity control through one loss term—
+        without any architectural changes.
+      </p>
+    </div>
+
+    <!-- Loss equation display -->
+    <div class="glass rounded-3xl p-10 mb-10 text-center reveal">
+      <div class="section-label text-violet-400 mb-6">Unified Training Objective</div>
+      <div class="text-slate-300 text-lg leading-loose mb-4">
+        \(\mathcal{L}_{\text{CAREF}} = \mathcal{L}_{\text{CE}} + \lambda_{\text{SCED}} \cdot \mathcal{L}_{\text{SCED}} + \lambda_{\text{KL}} \cdot \mathcal{L}_{\text{KL}}\)
+      </div>
+      <p class="text-slate-500 text-sm max-w-2xl mx-auto">
+        Cross-entropy preserves task accuracy; KL term provides global calibration pressure;
+        ℒ<sub>SCED</sub> provides local, adaptive token-level regularization.
+      </p>
+    </div>
+
+    <!-- SCED definition -->
+    <div class="glass rounded-3xl p-10 mb-10 reveal">
+      <div class="section-label text-teal-400 mb-6">Sparsity-Calibrated Entropic Divergence (ℒ<sub>SCED</sub>)</div>
+      <div class="text-slate-300 text-lg text-center mb-8 leading-loose">
+        \(\mathcal{L}_{\text{SCED}} = \sum_{t}\sum_{v=1}^{|\mathcal{V}|} \left|P_{t,v}\log\frac{P_{t,v}}{U_v}\right|^{\alpha} \cdot (1-P_{t,v})^{\beta}\)
+      </div>
+      <div class="grid md:grid-cols-2 gap-6 text-sm text-slate-400 leading-relaxed">
+        <div class="bg-white/[0.03] rounded-2xl p-6">
+          <div class="text-violet-400 font-bold mb-3">α — Entropic Curvature</div>
+          For α = 1 → standard KL contribution per token pair.
+          For α &gt; 1 → super-linear penalty; large deviations from uniform incur disproportionately higher gradients.
+          Combats overconfidence on spurious tokens that harm faithfulness.
+        </div>
+        <div class="bg-white/[0.03] rounded-2xl p-6">
+          <div class="text-teal-400 font-bold mb-3">β — Adaptive Token Sparsity</div>
+          Factor (1−P<sub>t,v</sub>)<sup>β</sup> attenuates penalty for high-probability tokens,
+          concentrating regularization on the <em>tail</em> of the distribution.
+          Discourages spurious vocabulary-wide mass diffusion without disturbing confident, decision-relevant predictions.
+        </div>
+      </div>
+    </div>
+
+    <!-- Special cases table -->
+    <div class="glass rounded-3xl p-8 reveal">
+      <div class="section-label text-amber-400 mb-6">Special Cases — ℒ<sub>SCED</sub> Subsumes Classical Regularizers</div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-white/10 text-left">
+              <th class="py-4 pr-6 text-slate-300">Parameters</th>
+              <th class="py-4 text-slate-300">Recovered Behavior</th>
+            </tr>
+          </thead>
+          <tbody class="text-slate-400">
+            <tr class="border-b border-white/5 tbl-row"><td class="py-4 pr-6 font-mono text-violet-300">α=1, β=0</td><td class="py-4">Standard per-token KL divergence from uniform; no sparsity weighting</td></tr>
+            <tr class="border-b border-white/5 tbl-row"><td class="py-4 pr-6 font-mono text-violet-300">α&gt;1, β=0</td><td class="py-4">Power-law entropic penalty; large deviations incur super-linearly growing cost</td></tr>
+            <tr class="border-b border-white/5 tbl-row"><td class="py-4 pr-6 font-mono text-violet-300">α=1, β&gt;0</td><td class="py-4">Sparsity-weighted KL; focuses pressure on low-probability tail vocabulary</td></tr>
+            <tr class="tbl-row bg-teal-500/[0.07]"><td class="py-4 pr-6 font-mono text-teal-300 font-bold">α&gt;1, β&gt;0</td><td class="py-4 font-semibold text-teal-300">Full CAREF regime: adaptive sparsity + non-linear entropic curvature ✅</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="line max-w-7xl mx-auto"></div>
+
+<!-- ─────────────────────────────── RESULTS ────────────────────── -->
+<section id="results" class="py-32 px-6 relative">
+
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16 reveal">
+      <div class="section-label text-green-400 mb-4">Results</div>
+      <h2 class="text-4xl md:text-5xl font-black mb-6">State-of-the-Art with 6.43% Parameters</h2>
+      <p class="max-w-3xl mx-auto text-slate-400 text-lg leading-relaxed">
+        Evaluated on four NLE benchmarks (COS-E, ECQA, ComVE, e-SNLI) with Flan-T5 across 60 FEB splits.
+        CAREF-AQ achieves the best average accuracy <strong class="text-teal-400">89.04</strong> and
+        nBERT <strong class="text-teal-400">81.00</strong>, outperforming LoRA and AdaLoRA.
+      </p>
+    </div>
+
+    <!-- Results overview image -->
+    <div class="glass rounded-3xl overflow-hidden mb-12 reveal">
+      <img src="img/result.png" alt="CAREF full results — accuracy vs parameter budget and nBERT explanation quality" class="w-full">
+      <div class="p-6 border-t border-white/5">
+        <p class="text-slate-400 text-sm text-center">
+          <strong class="text-slate-200">Figure 2.</strong>
+          Accuracy vs. parameter budget (left) and nBERT explanation quality per dataset (right).
+          CAREF-AQ (star ★) dominates both axes simultaneously.
+        </p>
+      </div>
+    </div>
+
+    <!-- Unified results table -->
+    <div class="glass rounded-3xl p-8 overflow-x-auto reveal">
+      <div class="section-label text-green-400 mb-6">Unified Results Table (Accuracy A / nBERT E)</div>
+      <table class="w-full text-xs md:text-sm min-w-[760px]">
+        <thead>
+          <tr class="border-b border-white/10 text-left">
+            <th class="py-4 pr-4 text-slate-300">Section</th>
+            <th class="py-4 pr-4 text-slate-300">Model</th>
+            <th class="py-4 pr-3 text-slate-300">M</th>
+            <th class="py-4 pr-3 text-slate-300">COS-E</th>
+            <th class="py-4 pr-3 text-slate-300">ECQA</th>
+            <th class="py-4 pr-3 text-slate-300">ComVE</th>
+            <th class="py-4 pr-3 text-slate-300">e-SNLI</th>
+            <th class="py-4 pr-3 text-slate-300">Avg</th>
+            <th class="py-4 text-slate-300">Param%</th>
+          </tr>
+        </thead>
+        <tbody class="text-slate-400">
+          <!-- RQ1 Ablation -->
+          <tr class="border-b border-white/5 tbl-row"><td class="py-3 pr-4 text-slate-500 text-xs" rowspan="10">Ablation<br/>(RQ1)</td><td class="pr-4">CAREF-BASE</td><td class="pr-3 text-teal-500">A</td><td>85.19</td><td>86.29</td><td>94.76</td><td>88.32</td><td>88.64</td><td>100%</td></tr>
+          <tr class="border-b border-white/5 tbl-row"><td class="pr-4"></td><td class="pr-3 text-violet-400">E</td><td>74.00</td><td>77.51</td><td>86.60</td><td>79.76</td><td>79.47</td><td></td></tr>
+          <tr class="border-b border-white/5 tbl-row"><td class="pr-4">CAREF-DEC</td><td class="pr-3 text-teal-500">A</td><td>81.56</td><td>85.76</td><td>94.73</td><td>74.73</td><td>84.19</td><td>52.23%</td></tr>
+          <tr class="border-b border-white/5 tbl-row"><td></td><td class="pr-3 text-violet-400">E</td><td>71.53</td><td>77.40</td><td>87.54</td><td>67.89</td><td>76.09</td><td></td></tr>
+          <tr class="border-b border-white/5 tbl-row"><td class="pr-4">CAREF-AQKV</td><td class="pr-3 text-teal-500">A</td><td>84.30</td><td>88.51</td><td>94.37</td><td>88.26</td><td>88.86</td><td>19.28%</td></tr>
+          <tr class="border-b border-white/5 tbl-row"><td></td><td class="pr-3 text-violet-400">E</td><td>73.43</td><td>79.29</td><td>86.73</td><td>81.80</td><td>80.31</td><td></td></tr>
+          <tr class="border-b border-white/5 tbl-row"><td class="pr-4">CAREF-LAQ</td><td class="pr-3 text-teal-500">A</td><td>84.73</td><td>88.93</td><td>94.23</td><td>88.07</td><td>88.99</td><td>6.44%</td></tr>
+          <tr class="border-b border-white/5 tbl-row"><td></td><td class="pr-3 text-violet-400">E</td><td>74.57</td><td>79.96</td><td>86.57</td><td>80.96</td><td>80.52</td><td></td></tr>
+          <tr class="border-b border-teal-500/20 bg-teal-500/[0.07] tbl-row font-semibold"><td class="pr-4 text-teal-300">CAREF-AQ ★</td><td class="pr-3 text-teal-400">A</td><td>84.59</td><td>88.93</td><td>94.16</td><td class="text-teal-300 font-bold">88.48</td><td class="text-teal-300 font-bold">89.04</td><td class="text-teal-300 font-bold">6.43%</td></tr>
+          <tr class="border-b border-teal-500/20 bg-teal-500/[0.07] tbl-row font-semibold"><td></td><td class="pr-3 text-violet-400">E</td><td>74.42</td><td>80.31</td><td class="text-teal-300 font-bold">87.29</td><td class="text-teal-300 font-bold">81.97</td><td class="text-teal-300 font-bold">81.00</td><td></td></tr>
+          <!-- RQ3 PEFT comparison -->
+          <tr class="border-t border-white/10 border-b border-white/5 tbl-row"><td class="py-3 pr-4 text-slate-500 text-xs" rowspan="6">vs. PEFT<br/>(RQ3)</td><td class="pr-4">AdaLoRA 4.46%</td><td class="pr-3 text-teal-500">A</td><td>43.32</td><td>15.16</td><td>35.32</td><td>0.56</td><td class="text-red-400">23.59</td><td>4.46%</td></tr>
+          <tr class="border-b border-white/5 tbl-row"><td></td><td class="pr-3 text-violet-400">E</td><td>35.48</td><td>12.33</td><td>30.74</td><td>0.47</td><td class="text-red-400">19.75</td><td></td></tr>
+          <tr class="border-b border-white/5 tbl-row"><td class="pr-4">LoRA R=128</td><td class="pr-3 text-teal-500">A</td><td>84.58</td><td>91.77</td><td>94.57</td><td>83.37</td><td>88.57</td><td>15.74%</td></tr>
+          <tr class="border-b border-white/5 tbl-row"><td></td><td class="pr-3 text-violet-400">E</td><td>74.52</td><td>82.89</td><td>87.73</td><td>77.17</td><td>80.58</td><td></td></tr>
+          <tr class="border-b border-teal-500/20 bg-teal-500/[0.07] tbl-row font-semibold"><td class="pr-4 text-teal-300">CAREF-AQ ★</td><td class="pr-3 text-teal-400">A</td><td class="font-bold">84.59</td><td>88.93</td><td>94.16</td><td class="text-teal-300 font-bold">88.48</td><td class="text-teal-300 font-bold">89.04</td><td class="text-teal-300 font-bold">6.43%</td></tr>
+          <tr class="bg-teal-500/[0.07] tbl-row font-semibold"><td></td><td class="pr-3 text-violet-400">E</td><td class="font-bold">74.42</td><td>80.31</td><td class="text-teal-300 font-bold">87.29</td><td class="text-teal-300 font-bold">81.97</td><td class="text-teal-300 font-bold">81.00</td><td></td></tr>
+        </tbody>
+      </table>
+      <p class="text-slate-500 text-xs mt-4">M: metric — A = Accuracy, E = nBERT. Highlighted rows are CAREF variants. Results averaged over 60 splits.</p>
+    </div>
+
+  </div>
+</section>
+
+<div class="line max-w-7xl mx-auto"></div>
+
+<!-- ─────────────────────────────── QUALITATIVE ────────────────── -->
+<section id="qualitative" class="py-32 px-6 relative">
+
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16 reveal">
+      <div class="section-label text-pink-400 mb-4">Qualitative Examples</div>
+      <h2 class="text-4xl md:text-5xl font-black mb-6">Faithful Explanations, No Rationale Labels</h2>
+      <p class="max-w-3xl mx-auto text-slate-400 text-lg leading-relaxed">
+        CAREF-AQ consistently produces concise, causally grounded explanations across datasets.
+        Baseline models generate verbose or semantically incoherent justifications.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-8 reveal">
+
+      <div class="glass rounded-3xl overflow-hidden">
+        <img src="img/overview_main.png" alt="CAREF qualitative comparison — COS-E predictions" class="w-full">
+        <div class="p-8 border-t border-white/5">
+          <h3 class="text-xl font-bold mb-3 text-teal-300">Architecture & Model Overview</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">
+            CAREF fine-tunes only attention query projections (6.43% of parameters), encouraging
+            sparse and calibrated attention patterns that concentrate on causally relevant input spans.
+          </p>
+        </div>
+      </div>
+
+      <div class="glass rounded-3xl overflow-hidden">
+        <img src="img/sample_predict.png" alt="CAREF qualitative predictions — COS-E and ECQA" class="w-full">
+        <div class="p-8 border-t border-white/5">
+          <h3 class="text-xl font-bold mb-3 text-violet-300">Sample Predictions Across Benchmarks</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">
+            CAREF-AQ (bottom rows) produces concise, factually precise answers—e.g., correctly identifying
+            "Atlantic Ocean" and "air conditioning" with tighter, more faithful explanations than BASE or DEC variants.
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Human eval highlights -->
+    <div class="glass rounded-3xl p-10 mt-10 reveal">
+      <div class="section-label text-pink-400 mb-6">Human Evaluation Results</div>
+      <div class="grid md:grid-cols-4 gap-6 text-center">
+        <div>
+          <div class="text-4xl font-black text-green-400 mb-2" style="font-family:'Syne',sans-serif">0.69</div>
+          <div class="text-slate-300 font-semibold mb-1">ECQA</div>
+          <div class="text-slate-500 text-xs">Fact-grounded commonsense — highest faithfulness score</div>
+        </div>
+        <div>
+          <div class="text-4xl font-black text-teal-400 mb-2" style="font-family:'Syne',sans-serif">0.58</div>
+          <div class="text-slate-300 font-semibold mb-1">e-SNLI</div>
+          <div class="text-slate-500 text-xs">Well-defined entailment structure aids legibility</div>
+        </div>
+        <div>
+          <div class="text-4xl font-black text-violet-400 mb-2" style="font-family:'Syne',sans-serif">0.53</div>
+          <div class="text-slate-300 font-semibold mb-1">ComVE</div>
+          <div class="text-slate-500 text-xs">World knowledge plausibility discrimination</div>
+        </div>
+        <div>
+          <div class="text-4xl font-black text-amber-400 mb-2" style="font-family:'Syne',sans-serif">44</div>
+          <div class="text-slate-300 font-semibold mb-1">Strong Yes</div>
+          <div class="text-slate-500 text-xs">CAREF yields 44 "Strong Yes" labels on ECQA — no rationale supervision</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ─────────────────────────────── BIG QUOTE ──────────────────── -->
+<section class="py-40 px-6 text-center relative overflow-hidden">
+  <div class="orb orb-teal" style="width:500px;height:500px;top:-100px;left:50%;transform:translateX(-50%);"></div>
+  <div class="relative z-10 max-w-5xl mx-auto">
+    <div class="text-4xl md:text-6xl font-black leading-tight">
+      Existing methods require
+      <span class="text-red-400">rationale annotations</span>
+      or full fine-tuning.
+      <br/><br/>
+      <span class="grad-text">
+        CAREF gets both accuracy and faithfulness for free.
+      </span>
+    </div>
+  </div>
+</section>
+
+<div class="line max-w-7xl mx-auto"></div>
+
+<!-- ─────────────────────────────── CITATION ───────────────────── -->
+<section id="citation" class="py-32 px-6">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-16 reveal">
+      <div class="section-label text-teal-400 mb-4">Citation</div>
+      <h2 class="text-4xl font-black">BibTeX</h2>
+    </div>
+
+    <div class="relative group reveal">
+      <div class="absolute -inset-1 bg-gradient-to-r from-teal-500/25 via-violet-500/20 to-amber-400/20 rounded-2xl blur-xl opacity-60 group-hover:opacity-100 transition duration-500"></div>
+      <div class="relative rounded-2xl border border-white/10 bg-slate-950/80 backdrop-blur-xl shadow-2xl overflow-hidden">
+        <!-- top bar -->
+        <div class="flex items-center justify-between px-5 py-3 border-b border-white/10 bg-white/[0.04]">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-red-400"></span>
+            <span class="w-3 h-3 rounded-full bg-yellow-400"></span>
+            <span class="w-3 h-3 rounded-full bg-green-400"></span>
+          </div>
+          <span class="section-label text-slate-400">BibTeX Citation</span>
+        </div>
+        <pre class="overflow-x-auto p-8 text-sm leading-8 text-slate-200"><span class="text-pink-400">@inproceedings</span>{<span class="text-teal-300">panboonyuen2026caref</span>,
+  <span class="text-violet-300">title</span>     = {CAREF: Calibration-Aware Regularization for
+              Explanation Faithfulness Without Rationale
+              Supervision},
+  <span class="text-violet-300">author</span>    = {Panboonyuen, Teerapong},
+  <span class="text-violet-300">booktitle</span> = {Proceedings of EMNLP 2026},
+  <span class="text-violet-300">note</span>      = {Under ACL Rolling Review (ARR) May 2026},
+  <span class="text-violet-300">year</span>      = {2026},
+  <span class="text-violet-300">url</span>       = {https://kaopanboonyuen.github.io/CAREF}
+}</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ─────────────────────────────── FOOTER ─────────────────────── -->
+<footer class="py-12 px-6 border-t border-white/5">
+  <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+    <div>
+      <div class="text-3xl font-black grad-text mb-2" style="font-family:'Syne',sans-serif">CAREF</div>
+      <div class="text-slate-500 text-sm">Calibration-Aware Regularization for Explanation Faithfulness</div>
+    </div>
+    <div class="text-slate-500 text-sm text-center md:text-right">
+      © 2026 Teerapong Panboonyuen<br/>
+      <a href="https://kaopanboonyuen.github.io/CAREF" class="text-teal-500 hover:underline">kaopanboonyuen.github.io/CAREF</a>
+    </div>
+  </div>
+</footer>
+
+<!-- ─────────────────────────────── SCRIPTS ────────────────────── -->
+<script>
+  // KaTeX
+  document.addEventListener("DOMContentLoaded", function() {
+    renderMathInElement(document.body, {
+      delimiters: [
+        {left: "\\(", right: "\\)", display: false},
+        {left: "\\[", right: "\\]", display: true}
+      ]
+    });
+  });
+
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
