@@ -2,7 +2,7 @@
 """
 scripts/train.py
 ================
-Entry-point for the CAREF EMNLP 2026 experiments.
+Entry-point for the CAREF experiments.
 
 Runs the full FEB protocol (60 splits × 48 train / 350 val) for a given
 dataset and CAREF variant, then reports mean ± std accuracy and nBERT.
