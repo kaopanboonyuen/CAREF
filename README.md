@@ -2,19 +2,17 @@
 
 <div align="center">
 
-<h1>🧠 CAREF</h1>
+# 🧠 CAREF
 
-<h3>
-Calibration-Aware Regularization for Explanation Faithfulness <br>
-Without Rationale Supervision
-</h3>
+### Calibration-Aware Regularization for Explanation Faithfulness  
+### Without Rationale Supervision
 
-<p>
-<strong>EMNLP 2026 Submission</strong><br>
+<br>
+
+<strong>EMNLP 2026 Submission</strong>  
 Currently under <strong>The ACL Rolling Review (ARR) — May 2026</strong>
-</p>
 
-<p>
+<br><br>
 
 <a href="https://kaopanboonyuen.github.io/CAREF/">
 <img src="https://img.shields.io/badge/🌐-Project_Page-black?style=for-the-badge">
@@ -28,9 +26,7 @@ Currently under <strong>The ACL Rolling Review (ARR) — May 2026</strong>
 
 <img src="https://img.shields.io/badge/Status-ARR%20May%202026-success?style=for-the-badge">
 
-</p>
-
----
+<br><br>
 
 ### ⚡ Parameter-Efficient Fine-Tuning for Faithful Natural Language Explanations
 
@@ -40,121 +36,86 @@ Currently under <strong>The ACL Rolling Review (ARR) — May 2026</strong>
 
 # 🌟 Overview
 
-**CAREF** (**C**alibration-**A**ware **R**egularization for **E**xplanation **F**aithfulness) is a novel parameter-efficient fine-tuning framework designed to jointly optimize:
+**CAREF** (**C**alibration-**A**ware **R**egularization for **E**xplanation **F**aithfulness) is a lightweight and explanation-oriented fine-tuning framework designed for generating more faithful natural language explanations from large language models.
 
-- ✅ Predictive Accuracy
-- ✅ Explanation Faithfulness
-- ✅ Calibration Stability
-- ✅ Sparse Decision Grounding
+Unlike conventional fine-tuning approaches that optimize only predictive performance, CAREF explicitly encourages:
 
-without requiring **rationale supervision**.
+- ✅ Better explanation grounding
+- ✅ Stable confidence calibration
+- ✅ Sparse decision-relevant reasoning
+- ✅ Improved explanation alignment
 
-CAREF introduces a unified regularization objective:
-
-\[
-\mathcal{L}_{\text{SCED}}
-\]
-
-which combines:
-
-- entropy-aware calibration
-- adaptive token sparsity
-- explanation-oriented optimization
-
-inside a single differentiable loss.
+without requiring expensive rationale annotations.
 
 ---
 
-# 🚀 Key Highlights
+# 🚀 Highlights
 
-- 🧠 First unified entropy + sparsity regularizer for faithful NLE fine-tuning
+- 🧠 Explanation-oriented PEFT framework
 - ⚡ Only **6.43% trainable parameters**
-- 📈 Outperforms LoRA and AdaLoRA on explanation quality
-- 🔍 Improves explanation faithfulness without rationale labels
-- 🧩 Plug-and-play with PEFT methods
+- 📈 Improves explanation quality across multiple NLE benchmarks
+- 🔍 Better explanation faithfulness without rationale supervision
+- 🧩 Compatible with LoRA and PEFT pipelines
 - 🌍 Architecture-agnostic design
-- 📚 Evaluated on four NLE benchmarks
+- 📚 Evaluated on four commonsense reasoning datasets
 
 ---
 
-# 🖼️ Project Overview
+# 🖼️ CAREF Overview
 
 <p align="center">
   <img src="img/overview_main.png" width="92%">
 </p>
 
 <p align="center">
-<b>Figure:</b> CAREF overview including parameter efficiency, explanation quality, human evaluation, and hyperparameter sensitivity.
+<b>CAREF overview:</b> parameter efficiency, explanation quality, human evaluation, and hyperparameter sensitivity analysis.
 </p>
 
 ---
 
 # 🧠 Motivation
 
-Large Language Models can generate highly plausible explanations.
+Large Language Models can generate explanations that sound convincing.
 
 However:
 
 > plausible explanations are not always faithful explanations.
 
-Most existing approaches:
+Most existing approaches either:
 
-- require expensive rationale annotations
-- rely on post-hoc attribution
-- improve fluency rather than causal grounding
+- require costly rationale annotations
+- rely on post-hoc interpretation
+- optimize fluency instead of causal grounding
 
-CAREF addresses this problem by directly regularizing the predictive distribution during fine-tuning.
+CAREF addresses this challenge by encouraging models to focus on sparse and decision-relevant reasoning patterns during fine-tuning.
 
 ---
 
 # ⚙️ Method
 
-## Unified Objective
+CAREF introduces a calibration-aware training strategy that jointly improves:
 
-CAREF optimizes:
+| Objective | Purpose |
+|---|---|
+| Predictive Learning | Preserve downstream task accuracy |
+| Calibration Regularization | Reduce unstable overconfidence |
+| Sparse Token Control | Encourage concise reasoning |
+| Explanation Alignment | Improve faithfulness of generated explanations |
 
-\[
-\mathcal{L}_{\text{CAREF}}
-=
-\mathcal{L}_{\text{CE}}
-+
-\lambda_{\text{SCED}}
-\mathcal{L}_{\text{SCED}}
-+
-\lambda_{\text{KL}}
-\mathcal{L}_{\text{KL}}
-\]
-
-where:
-
-- \(\mathcal{L}_{CE}\) = task objective
-- \(\mathcal{L}_{KL}\) = calibration regularization
-- \(\mathcal{L}_{SCED}\) = proposed sparsity-calibrated entropic divergence
+Instead of relying on rationale supervision, CAREF regularizes the predictive behavior of the model directly during optimization.
 
 ---
 
-## Sparsity-Calibrated Entropic Divergence (SCED)
+# 🔥 Why CAREF Works
 
-\[
-\mathcal{L}_{\text{SCED}} =
-\sum_t \sum_v
-\left|
-P_{t,v}
-\log
-\frac{P_{t,v}}{U_v}
-\right|^\alpha
-(1-P_{t,v})^\beta
-\]
+CAREF encourages models to:
 
-### ✨ Intuition
+- focus on relevant reasoning tokens
+- avoid diffuse explanation patterns
+- reduce overconfident predictions
+- generate more grounded explanations
 
-CAREF encourages:
-
-- sparse decision-relevant tokens
-- calibrated confidence distributions
-- stable explanation grounding
-
-instead of diffuse or overconfident reasoning patterns.
+This leads to stronger explanation quality while maintaining high predictive performance.
 
 ---
 
@@ -177,22 +138,9 @@ instead of diffuse or overconfident reasoning patterns.
 
 ---
 
-# 🔥 Why CAREF Works
-
-CAREF jointly controls:
-
-| Component | Effect |
-|---|---|
-| Entropy Calibration | Prevents overconfident predictions |
-| Adaptive Sparsity | Focuses on decision-relevant tokens |
-| PEFT Regularization | Efficient fine-tuning |
-| Distributional Control | Improves explanation grounding |
-
----
-
 # 🧪 Benchmarks
 
-We evaluate on:
+We evaluate CAREF on four Natural Language Explanation benchmarks:
 
 | Dataset | Task |
 |---|---|
@@ -217,7 +165,7 @@ We evaluate on:
 
 # 📈 Human Evaluation
 
-CAREF improves human-perceived explanation faithfulness:
+CAREF consistently improves human-perceived explanation faithfulness.
 
 | Dataset | Human Score |
 |---|---:|
@@ -226,11 +174,11 @@ CAREF improves human-perceived explanation faithfulness:
 | SenseMaking | 0.53 |
 | COS-E | 0.47 |
 
-Notably:
+Key observations:
 
-- CAREF obtains significantly more **Strong Yes** labels
-- without any rationale supervision
-- using only sparse PEFT updates
+- CAREF produces more causally grounded explanations
+- explanation quality improves without rationale labels
+- sparse PEFT adaptation improves reasoning consistency
 
 ---
 
@@ -238,7 +186,7 @@ Notably:
 
 | Variant | Updated Module | Parameter Budget |
 |---|---|---:|
-| CAREF-BASE | Full FT | 100% |
+| CAREF-BASE | Full Fine-Tuning | 100% |
 | CAREF-DEC | Decoder Only | 52.23% |
 | CAREF-AQKV | Attention QKV | 19.28% |
 | CAREF-LAQ | Lightweight AQ | 6.44% |
@@ -248,39 +196,31 @@ Notably:
 
 # 🔬 Key Findings
 
-## ✅ CAREF-AQ achieves the best trade-off
+## ✅ CAREF-AQ achieves the best overall trade-off
 
 - highest average accuracy
 - strongest explanation alignment
-- low parameter budget
-
-## ✅ Explanation quality improves consistently
-
-CAREF improves nBERT across:
-
-- all datasets
-- all fine-tuning regimes
-- low-resource settings
-
-## ✅ Sparse attention adaptation matters
-
-Updating only attention query projections performs better than:
-
-- full fine-tuning
-- large LoRA configurations
+- efficient parameter usage
 
 ---
 
-# 🧠 Theoretical Insights
+## ✅ Explanation quality improves consistently
 
-CAREF generalizes multiple classical regularizers:
+CAREF improves explanation quality across:
 
-| Parameters | Behavior |
-|---|---|
-| \(\alpha=1,\beta=0\) | KL divergence |
-| \(\alpha>1,\beta=0\) | Power-law entropy |
-| \(\alpha=1,\beta>0\) | Sparsity-weighted KL |
-| \(\alpha>1,\beta>0\) | Full CAREF regime |
+- multiple datasets
+- multiple PEFT settings
+- low-resource learning scenarios
+
+---
+
+## ✅ Sparse attention adaptation matters
+
+Updating only attention query projections performs competitively against:
+
+- full fine-tuning
+- larger LoRA configurations
+- high-parameter PEFT baselines
 
 ---
 
@@ -299,7 +239,9 @@ Compatible with:
 - BART
 - LLaMA
 - GPT-style decoders
-- LoRA / Adapters / Prefix Tuning
+- LoRA
+- Adapters
+- Prefix Tuning
 
 ---
 
@@ -321,10 +263,11 @@ Compatible with:
 
 ```bash
 git clone https://github.com/kaopanboonyuen/CAREF.git
+
 cd CAREF
 
 pip install -r requirements.txt
-````
+```
 
 ---
 
@@ -346,7 +289,41 @@ model = AutoModelForSeq2SeqLM.from_pretrained(
 
 ## 🔗 Official Website
 
-👉 [https://kaopanboonyuen.github.io/CAREF/](https://kaopanboonyuen.github.io/CAREF/)
+👉 https://kaopanboonyuen.github.io/CAREF/
+
+---
+
+# 🙏 Acknowledgements
+
+This work builds upon:
+
+- Hugging Face Transformers
+- PEFT
+- Flan-T5
+- EMNLP / ACL research community
+
+---
+
+# ⭐ Support the Project
+
+If you find CAREF useful, please consider:
+
+- ⭐ Starring the repository
+- 🍴 Forking the project
+- 📚 Citing the paper
+- 🌍 Sharing with the NLP community
+
+---
+
+<div align="center">
+
+# 🧠 CAREF
+
+### Faithful Explanations through Calibration-Aware Sparse Fine-Tuning
+
+<strong>EMNLP 2026 • ARR May 2026</strong>
+
+</div>
 
 ---
 
@@ -360,52 +337,5 @@ model = AutoModelForSeq2SeqLM.from_pretrained(
   year={2026}
 }
 ```
-
----
-
-# 👨‍💻 Author
-
-## Teerapong Panboonyuen
-
-* 🌏 Thailand
-* 🧠 AI / Computer Vision / Geospatial Foundation Models
-* 🔬 NLP + Explainable AI + PEFT Research
-
-🌐 Website:
-[https://kaopanboonyuen.github.io/](https://kaopanboonyuen.github.io/)
-
----
-
-# 🙏 Acknowledgements
-
-This work builds upon:
-
-* Hugging Face Transformers
-* PEFT
-* Flan-T5
-* EMNLP / ACL research community
-
----
-
-# ⭐ If you find CAREF useful
-
-Please consider:
-
-* ⭐ Starring the repository
-* 🍴 Forking the project
-* 📚 Citing the paper
-* 🌍 Sharing with the NLP community
-
----
-
-<div align="center">
-
-<h2>🧠 CAREF</h2>
-
-<h3>Faithful Explanations through Calibration-Aware Sparse Fine-Tuning</h3>
-
-<strong>EMNLP 2026 • ARR May 2026</strong>
-
-</div>
 
 ---
