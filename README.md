@@ -321,7 +321,7 @@ If you find CAREF useful, please consider:
 
 ### Faithful Explanations through Calibration-Aware Sparse Fine-Tuning
 
-<strong>EMNLP 2026 • ARR May 2026</strong>
+<strong>EMNLP 2026 Submission • ARR May 2026</strong>
 
 </div>
 
