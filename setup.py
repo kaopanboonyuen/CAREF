@@ -1,4 +1,4 @@
-"""setup.py — CAREF EMNLP 2026 reproduction package."""
+"""setup.py — CAREF EMNLP 2026 Submission reproduction package."""
 
 from setuptools import setup, find_packages
 
@@ -19,7 +19,7 @@ setup(
     author_email="teerapong.pa@chula.ac.th",
     description=(
         "CAREF: Calibration-Aware Regularization for Explanation Faithfulness "
-        "Without Rationale Supervision — EMNLP 2026"
+        "Without Rationale Supervision — EMNLP 2026 Submission"
     ),
     long_description=long_description,
     long_description_content_type="text/markdown",
