@@ -2,7 +2,7 @@
 CAREF: Calibration-Aware Regularization for Explanation Faithfulness
 Without Rationale Supervision.
 
-EMNLP 2026  |  https://kaopanboonyuen.github.io/CAREF
+EMNLP 2026 Submission  |  https://kaopanboonyuen.github.io/CAREF
 
 Quick start
 -----------

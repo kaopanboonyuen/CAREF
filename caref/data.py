@@ -13,7 +13,7 @@ Marasović et al. (2022). Few-Shot Self-Rationalization with Natural
 Language Prompts. ACL Findings.
 
 Panboonyuen, T. (2026). CAREF: Calibration-Aware Regularization for
-Explanation Faithfulness Without Rationale Supervision. EMNLP 2026.
+Explanation Faithfulness Without Rationale Supervision. EMNLP 2026 Submission.
 """
 
 from __future__ import annotations

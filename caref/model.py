@@ -10,7 +10,7 @@ on both accuracy and nBERT (see Table 1 of the paper).
 Reference
 ---------
 Panboonyuen, T. (2026). CAREF: Calibration-Aware Regularization for
-Explanation Faithfulness Without Rationale Supervision. EMNLP 2026.
+Explanation Faithfulness Without Rationale Supervision. EMNLP 2026 Submission.
 https://kaopanboonyuen.github.io/CAREF
 """
 

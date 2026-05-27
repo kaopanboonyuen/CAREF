@@ -2,7 +2,7 @@
 caref/losses.py
 ===============
 CAREF: Calibration-Aware Regularization for Explanation Faithfulness
-EMNLP 2026 — Official Reproduction Code
+EMNLP 2026 Submission — Official Reproduction Code
 
 Implements the three-term training objective:
 
@@ -15,7 +15,7 @@ where L_SCED is the novel Sparsity-Calibrated Entropic Divergence:
 Reference
 ---------
 Panboonyuen, T. (2026). CAREF: Calibration-Aware Regularization for
-Explanation Faithfulness Without Rationale Supervision. EMNLP 2026.
+Explanation Faithfulness Without Rationale Supervision. EMNLP 2026 Submission.
 https://kaopanboonyuen.github.io/CAREF
 """
 
