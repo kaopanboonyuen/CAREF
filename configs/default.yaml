@@ -1,0 +1,47 @@
+# configs/default.yaml
+# ====================
+# Default CAREF-AQ configuration matching Appendix D of the paper.
+#
+# Reference:
+#   Panboonyuen, T. (2026). CAREF: Calibration-Aware Regularization for
+#   Explanation Faithfulness Without Rationale Supervision. EMNLP 2026.
+#   https://kaopanboonyuen.github.io/CAREF
+
+model:
+  base_model: google/flan-t5-large
+  variant: CAREF-AQ          # decoder query projections only (6.43% params)
+  max_input_length: 256
+  max_target_length: 64
+
+caref_loss:
+  alpha: 2.0                 # Entropic curvature exponent
+  beta: 1.0                  # Adaptive sparsity exponent
+  lambda_sced: 0.1           # Weight of L_SCED
+  lambda_kl: 0.1             # Weight of global KL term
+  eps: 1.0e-9                # Numerical stability epsilon
+
+training:
+  epochs: 50
+  lr: 3.0e-5                 # AdamW learning rate
+  batch_size: 4
+  warmup_steps: 500
+  max_grad_norm: 1.0
+  weight_decay: 0.01
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  adam_eps: 1.0e-8
+  fp16: false
+
+feb_protocol:
+  n_splits: 60
+  train_size: 48
+  val_size: 350
+  seed: 42
+
+hardware:
+  # As used in the paper (Appendix D)
+  gpu: NVIDIA A40
+  cuda: "11.4"
+  os: Ubuntu 20.04
+  cpu: AMD Ryzen 9 5900X
+  ram_gb: 64
