@@ -333,7 +333,8 @@ If you find CAREF useful, please consider:
 @article{panboonyuen2026caref,
   title={CAREF: Calibration-Aware Regularization for Explanation Faithfulness Without Rationale Supervision},
   author={Panboonyuen, Teerapong},
-  journal={ACL Rolling Review (ARR) May 2026},
+  journal={arXiv preprint arXiv:2605.27835},
+  note={Under ACL Rolling Review (ARR) May 2026},
   year={2026}
 }
 ```
